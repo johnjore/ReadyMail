@@ -231,27 +231,34 @@ namespace ReadyMailSMTP
 
         void parseCaps(const String &line)
         {
+            char token[24];
             if (line.indexOf("AUTH ", 0) > -1)
             {
                 for (int i = smtp_auth_cap_plain; i < smtp_auth_cap_max_type; i++)
                 {
-                    if (line.indexOf(smtp_auth_cap_token[i].text, 0) > -1)
+                    memcpy_P(token, smtp_auth_cap_token[i].text, sizeof(smtp_auth_cap_token[i].text));
+                    if (line.indexOf(token, 0) > -1)
                         auth_caps[i] = true;
                 }
             }
-            else if (line.indexOf(smtp_auth_cap_token[smtp_auth_cap_starttls].text, 0) > -1)
-            {
-                auth_caps[smtp_auth_cap_starttls] = true;
-                return;
-            }
             else
             {
-                for (int i = smtp_send_cap_binary_mime; i < smtp_send_cap_max_type; i++)
+                memcpy_P(token, smtp_auth_cap_token[smtp_auth_cap_starttls].text, sizeof(smtp_auth_cap_token[smtp_auth_cap_starttls].text));
+                if (line.indexOf(token, 0) > -1)
                 {
-                    if (strlen(smtp_send_cap_token[i].text) > 0 && line.indexOf(smtp_send_cap_token[i].text, 0) > -1)
+                    auth_caps[smtp_auth_cap_starttls] = true;
+                    return;
+                }
+                else
+                {
+                    for (int i = smtp_send_cap_binary_mime; i < smtp_send_cap_max_type; i++)
                     {
-                        feature_caps[i] = true;
-                        return;
+                        memcpy_P(token, smtp_send_cap_token[i].text, sizeof(smtp_send_cap_token[i].text));
+                        if (strlen(token) > 0 && line.indexOf(token, 0) > -1)
+                        {
+                            feature_caps[i] = true;
+                            return;
+                        }
                     }
                 }
             }
