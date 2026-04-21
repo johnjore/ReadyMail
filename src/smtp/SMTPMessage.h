@@ -134,26 +134,23 @@ namespace ReadyMailSMTP
      */
     smtp_headers &add(rfc822_header_types type, const String &value)
     {
-      if (type == rfc822_max_type || type == rfc822_custom || (findHeaders(type) > -1 && !rfc822_headers[type].multi))
+      smtp_rfc822_envelope hdr_def;
+      memcpy_P(&hdr_def, &rfc822_headers[type], sizeof(smtp_rfc822_envelope));
+    
+      if (type == rfc822_max_type || type == rfc822_custom || (findHeaders(type) > -1 && !hdr_def.multi))
         return *this;
-
       // Email sub type
-      if (rfc822_headers[type].sub_type > -1)
+      if (hdr_def.sub_type > -1)
       {
         int p1 = value.indexOf("<");
         int p2 = value.indexOf(">");
-
         if ((p1 == -1 && p2 > -1) || (p1 > -1 && p2 == -1) || (p1 > p2))
           return *this;
-
         String email = p1 > -1 && p2 > -1 ? value.substring(p1 + 1, p2) : value;
-
         smtp_header_item hdr;
-
         // Email with name
-        if (rfc822_headers[type].sub_type == 0 && p1 > -1 && p2 > -1)
+        if (hdr_def.sub_type == 0 && p1 > -1 && p2 > -1)
           hdr.name = "\"" + value.substring(0, p1 - 1) + "\" ";
-
         hdr.type = type;
         hdr.value = email;
         el.push_back(hdr);
@@ -162,8 +159,8 @@ namespace ReadyMailSMTP
       {
         smtp_header_item hdr;
         hdr.type = type;
-        hdr.name = rfc822_headers[type].text;
-        hdr.value = (rfc822_headers[type].enc ? encodeHeaderLine(value.c_str()) : value);
+        hdr.name = hdr_def.text;
+        hdr.value = (hdr_def.enc ? encodeHeaderLine(value.c_str()) : value);
         el.push_back(hdr);
       }
       return *this;
